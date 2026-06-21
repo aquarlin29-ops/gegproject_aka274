@@ -204,7 +204,8 @@
 
                 return (
                     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-bounce-short" style={{animationIterationCount: 1}}>
+                        {/* 解決Jekyll衝突：將 {{animationIterationCount: 1}} 改為 Object.assign */}
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-bounce-short" style={Object.assign({animationIterationCount: 1})} >
                             
                             {/* Header */}
                             <div className="flex justify-between items-center p-4 border-b bg-gray-50">
@@ -465,9 +466,10 @@
                                                             className={`w-full h-full object-contain p-2 ${isSpinning ? 'spinning-effect' : ''}`}
                                                         />
                                                     ) : (
+                                                        /* 解決Jekyll衝突：將 {{ backgroundColor: ... }} 改為 Object.assign */
                                                         <div 
                                                             className={`w-full h-full flex items-center justify-center text-white font-bold text-5xl ${isSpinning ? 'spinning-effect' : ''}`}
-                                                            style={{ backgroundColor: DEFAULT_COLORS[itemIndex % DEFAULT_COLORS.length] }}
+                                                            style={Object.assign({ backgroundColor: DEFAULT_COLORS[itemIndex % DEFAULT_COLORS.length] })}
                                                         > ? </div>
                                                     )}
                                                 </div>
