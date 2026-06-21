@@ -77,7 +77,7 @@
         const { useState, useEffect, useRef } = React;
 
         // --- 預設資料設定 ---
-        const DEFAULT_PASSCODE = "GEG2024"; // 預設通關密碼
+        const DEFAULT_PASSCODE = "GEG2024"; 
         const DEFAULT_COLORS = ["#4285F4", "#EA4335", "#FBBC05", "#34A853", "#673AB7"];
         const AUDIO_SRC = "https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg"; 
         const INITIAL_QUOTES = [
@@ -92,6 +92,16 @@
             "科技始終來自於人性，但人性常敗給惰性。 —— GEG"
         ];
 
+        // --- 樣式輔助函數 (完全避開任何雙大括號 nested 寫法) ---
+        const getBgColorStyle = (index) => {
+            const chosenColor = DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+            return { backgroundColor: chosenColor };
+        };
+
+        const getAnimationIterationStyle = () => {
+            return { animationIterationCount: 1 };
+        };
+
         // --- 圖示元件 ---
         const IconSettings = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
         const IconUpload = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
@@ -100,20 +110,176 @@
         const IconLock = () => <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
         const Sparkles = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>;
 
-        // --- 主程式 ---
+        // --- 密碼鎖登入子元件 (從主App抽出，效能與架構更健全) ---
+        const LoginScreen = ({ passcode, onLogin, showToast }) => {
+            const [input, setInput] = useState("");
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (input === passcode) {
+                    onLogin();
+                } else {
+                    showToast("通關密碼錯誤，請重新輸入", "error");
+                    setInput("");
+                }
+            };
+            return (
+                <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border-t-8 border-blue-500">
+                        <div className="flex justify-center text-blue-500 mb-4 animate-pulse">
+                            <IconLock />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">活動專屬拉霸機</h2>
+                        <p className="text-gray-500 text-sm mb-6">為保護活動專屬內容，請輸入通關密碼</p>
+                        <form onSubmit={handleLogin}>
+                            <input
+                                type="password"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="輸入密碼..."
+                                className="w-full px-4 py-3 mb-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-center tracking-widest text-lg"
+                            />
+                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg">
+                                解鎖進入
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 隱藏式設定後台子元件 (從主App抽出，效能與架構更健全) ---
+        const SettingsModal = ({ 
+            onClose, 
+            customImages, 
+            setCustomImages, 
+            quotes, 
+            setQuotes, 
+            passcode, 
+            setPasscode, 
+            showToast 
+        }) => {
+            const handleFileUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                
+                const newUrls = files.map(file => URL.createObjectURL(file));
+                setCustomImages(prev => [...prev, ...newUrls]);
+                showToast(`成功新增 ${newUrls.length} 張圖片`, "success");
+            };
+
+            const removeImage = (indexToRemove) => {
+                URL.revokeObjectURL(customImages[indexToRemove]); 
+                setCustomImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
+            };
+
+            const clearAllImages = () => {
+                if (confirm("確定要清除所有圖片嗎？")) {
+                    customImages.forEach(url => URL.revokeObjectURL(url)); 
+                    setCustomImages([]);
+                    showToast("圖片已全部清除", "info");
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-bounce-short" style={getAnimationIterationStyle()}>
+                        
+                        {/* Header */}
+                        <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+                            <h3 className="text-xl font-bold flex items-center gap-2"><IconSettings /> 拉霸機後台設定</h3>
+                            <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                                <IconX />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-8">
+                            
+                            {/* 圖片管理區 */}
+                            <section>
+                                <div className="flex justify-between items-end mb-3">
+                                    <div>
+                                        <h4 className="font-bold text-gray-800 text-lg">🖼️ 圖片管理區</h4>
+                                        <p className="text-sm text-gray-500">至少需上傳 3 張圖片，建議 5 張以上。目前：<span className={`font-bold ${customImages.length < 3 ? 'text-red-500' : 'text-green-600'}`}>{customImages.length} 張</span></p>
+                                    </div>
+                                    {customImages.length > 0 && (
+                                        <button onClick={clearAllImages} className="text-sm text-red-500 hover:text-red-700 font-medium">全部清除</button>
+                                    )}
+                                </div>
+                                
+                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-4">
+                                        {customImages.map((imgUrl, idx) => (
+                                            <div key={idx} className="relative aspect-square bg-white rounded-lg border shadow-sm group">
+                                                <img src={imgUrl} alt={`預覽 ${idx}`} className="w-full h-full object-cover rounded-lg p-1" />
+                                                <button 
+                                                    onClick={() => removeImage(idx)}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                                                >
+                                                    <IconTrash />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <div className="aspect-square">
+                                            <label className="w-full h-full border-2 border-dashed border-blue-300 rounded-lg flex flex-col items-center justify-center text-blue-500 hover:bg-blue-100 cursor-pointer transition-colors bg-white">
+                                                <IconUpload />
+                                                <span className="text-xs mt-1 font-bold">上傳</span>
+                                                <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="hidden" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* 金句管理區 */}
+                            <section>
+                                <h4 className="font-bold text-gray-800 text-lg mb-1">📝 金句管理區</h4>
+                                <p className="text-sm text-gray-500 mb-3">一行代表一句，系統將隨機抽取。</p>
+                                <textarea 
+                                    className="w-full h-40 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    value={quotes.join('\n')}
+                                    onChange={(e) => setQuotes(e.target.value.split('\n').filter(q => q.trim() !== ''))}
+                                />
+                            </section>
+
+                            {/* 安全設定區 */}
+                            <section>
+                                <h4 className="font-bold text-gray-800 text-lg mb-1">🔐 安全設定</h4>
+                                <p className="text-sm text-gray-500 mb-3">更改進入主畫面的通關密碼。</p>
+                                <input 
+                                    type="text" 
+                                    className="w-full md:w-1/2 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={passcode}
+                                    onChange={(e) => setPasscode(e.target.value)}
+                                />
+                            </section>
+                        </div>
+                        
+                        {/* Footer */}
+                        <div className="p-4 border-t bg-gray-50 text-right">
+                            <button 
+                                onClick={onClose}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+                            >
+                                完成設定
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 主 App 進入點 ---
         function App() {
-            // 系統層級狀態
             const [isAuthenticated, setIsAuthenticated] = useState(false);
             const [passcode, setPasscode] = useState(DEFAULT_PASSCODE);
             const [toast, setToast] = useState({ show: false, msg: "", type: "info" });
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-            // 資料層級狀態
             const [customImages, setCustomImages] = useState([]);
             const [quotes, setQuotes] = useState(INITIAL_QUOTES);
             const [name, setName] = useState("");
 
-            // 拉霸機遊戲狀態
             const [reels, setReels] = useState([0, 1, 2]); 
             const [isSpinning, setIsSpinning] = useState(false);
             const [currentQuote, setCurrentQuote] = useState(null);
@@ -122,185 +288,25 @@
             const audioRef = useRef(null);
             const ticketRef = useRef(null);
 
-            // 顯示優雅提示 (Toast)
             const showToast = (msg, type = "info") => {
-                setToast({ show: false, msg: "", type: "info" }); // Reset
+                setToast({ show: false, msg: "", type: "info" });
                 setTimeout(() => {
                     setToast({ show: true, msg, type });
                 }, 10);
             };
 
-            // 初始化時隨機給一個金句
             useEffect(() => {
                 if (quotes.length > 0 && !currentQuote) {
                     setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
                 }
             }, [quotes]);
 
-            // --- 登入畫面元件 ---
-            const LoginScreen = () => {
-                const [input, setInput] = useState("");
-                const handleLogin = (e) => {
-                    e.preventDefault();
-                    if (input === passcode) {
-                        setIsAuthenticated(true);
-                        showToast("登入成功！歡迎來到活動專屬拉霸機", "success");
-                    } else {
-                        showToast("通關密碼錯誤，請重新輸入", "error");
-                        setInput("");
-                    }
-                };
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
-                        <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center border-t-8 border-blue-500">
-                            <div className="flex justify-center text-blue-500 mb-4 animate-pulse">
-                                <IconLock />
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-2">活動專屬拉霸機</h2>
-                            <p className="text-gray-500 text-sm mb-6">為保護活動專屬內容，請輸入通關密碼</p>
-                            <form onSubmit={handleLogin}>
-                                <input
-                                    type="password"
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder="輸入密碼..."
-                                    className="w-full px-4 py-3 mb-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-center tracking-widest text-lg"
-                                />
-                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg">
-                                    解鎖進入
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                );
-            };
-
-            // --- 後台設定元件 (Modal) ---
-            const SettingsModal = () => {
-                // 記憶體管理：處理圖片上傳
-                const handleFileUpload = (e) => {
-                    const files = Array.from(e.target.files);
-                    if (files.length === 0) return;
-                    
-                    const newUrls = files.map(file => URL.createObjectURL(file));
-                    setCustomImages(prev => [...prev, ...newUrls]);
-                    showToast(`成功新增 ${newUrls.length} 張圖片`);
-                };
-
-                // 記憶體管理：刪除單張圖片
-                const removeImage = (indexToRemove) => {
-                    URL.revokeObjectURL(customImages[indexToRemove]); // 釋放記憶體
-                    setCustomImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
-                };
-
-                // 記憶體管理：清除全部圖片
-                const clearAllImages = () => {
-                    if (confirm("確定要清除所有圖片嗎？")) {
-                        customImages.forEach(url => URL.revokeObjectURL(url)); // 釋放記憶體
-                        setCustomImages([]);
-                        showToast("圖片已全部清除");
-                    }
-                };
-
-                return (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-                        {/* 解決Jekyll衝突：將 {{animationIterationCount: 1}} 改為 Object.assign */}
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-bounce-short" style={Object.assign({animationIterationCount: 1})} >
-                            
-                            {/* Header */}
-                            <div className="flex justify-between items-center p-4 border-b bg-gray-50">
-                                <h3 className="text-xl font-bold flex items-center gap-2"><IconSettings /> 拉霸機後台設定</h3>
-                                <button onClick={() => setIsSettingsOpen(false)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
-                                    <IconX />
-                                </button>
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-8">
-                                
-                                {/* 圖片管理區 */}
-                                <section>
-                                    <div className="flex justify-between items-end mb-3">
-                                        <div>
-                                            <h4 className="font-bold text-gray-800 text-lg">🖼️ 圖片管理區</h4>
-                                            <p className="text-sm text-gray-500">至少需上傳 3 張圖片，建議 5 張以上。目前：<span className={`font-bold ${customImages.length < 3 ? 'text-red-500' : 'text-green-600'}`}>{customImages.length} 張</span></p>
-                                        </div>
-                                        {customImages.length > 0 && (
-                                            <button onClick={clearAllImages} className="text-sm text-red-500 hover:text-red-700 font-medium">全部清除</button>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                                        <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-4">
-                                            {customImages.map((imgUrl, idx) => (
-                                                <div key={idx} className="relative aspect-square bg-white rounded-lg border shadow-sm group">
-                                                    <img src={imgUrl} alt={`預覽 ${idx}`} className="w-full h-full object-cover rounded-lg p-1" />
-                                                    <button 
-                                                        onClick={() => removeImage(idx)}
-                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
-                                                    >
-                                                        <IconTrash />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            <div className="aspect-square">
-                                                <label className="w-full h-full border-2 border-dashed border-blue-300 rounded-lg flex flex-col items-center justify-center text-blue-500 hover:bg-blue-100 cursor-pointer transition-colors bg-white">
-                                                    <IconUpload />
-                                                    <span className="text-xs mt-1 font-bold">上傳</span>
-                                                    <input type="file" multiple accept="image/*" onChange={handleFileUpload} className="hidden" />
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                {/* 金句管理區 */}
-                                <section>
-                                    <h4 className="font-bold text-gray-800 text-lg mb-1">📝 金句管理區</h4>
-                                    <p className="text-sm text-gray-500 mb-3">一行代表一句，系統將隨機抽取。</p>
-                                    <textarea 
-                                        className="w-full h-40 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                                        value={quotes.join('\n')}
-                                        onChange={(e) => setQuotes(e.target.value.split('\n').filter(q => q.trim() !== ''))}
-                                    />
-                                </section>
-
-                                {/* 安全設定區 */}
-                                <section>
-                                    <h4 className="font-bold text-gray-800 text-lg mb-1">🔐 安全設定</h4>
-                                    <p className="text-sm text-gray-500 mb-3">更改進入主畫面的通關密碼。</p>
-                                    <input 
-                                        type="text" 
-                                        className="w-full md:w-1/2 p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={passcode}
-                                        onChange={(e) => setPasscode(e.target.value)}
-                                    />
-                                </section>
-                            </div>
-                            
-                            {/* Footer */}
-                            <div className="p-4 border-t bg-gray-50 text-right">
-                                <button 
-                                    onClick={() => setIsSettingsOpen(false)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-                                >
-                                    完成設定
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            // --- 遊戲邏輯 ---
             const handleSpin = () => {
-                // 防呆機制：檢查圖片數量
                 if (customImages.length < 3) {
                     showToast(`圖片數量不足！目前只有 ${customImages.length} 張，請點擊右上角「設定」上傳至少 3 張圖片。`, "error");
                     return;
                 }
 
-                // 防呆機制：檢查姓名
                 if (!name.trim()) {
                     showToast("請先輸入您的大名，讓我們為您客製化幸運卡！", "error");
                     return;
@@ -310,7 +316,6 @@
                 setIsSpinning(true);
                 setShowJackpot(false);
                 
-                // 播放音效
                 if (audioRef.current) {
                     audioRef.current.currentTime = 0;
                     audioRef.current.play().catch(e => console.log("Audio failed:", e));
@@ -319,7 +324,6 @@
                 const duration = 2000; 
                 const intervalTime = 80; 
                 
-                // 產生滾動視覺
                 const spinInterval = setInterval(() => {
                     setReels([
                         Math.floor(Math.random() * customImages.length),
@@ -328,7 +332,6 @@
                     ]);
                 }, intervalTime);
 
-                // 停止並結算
                 setTimeout(() => {
                     clearInterval(spinInterval);
                     
@@ -340,15 +343,12 @@
                     
                     setReels(finalReels);
                     
-                    // 抽取隨機金句
                     if(quotes.length > 0) {
                         setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
                     }
                     
-                    // 判斷中大獎
                     if (finalReels[0] === finalReels[1] && finalReels[1] === finalReels[2]) {
                         setShowJackpot(true);
-                        // 觸發全螢幕碎紙花
                         confetti({
                             particleCount: 150,
                             spread: 70,
@@ -361,7 +361,6 @@
                 }, duration);
             };
 
-            // 下載截圖
             const handleDownload = async () => {
                 if (!ticketRef.current) return;
                 showToast("正在為您打包票根...", "info");
@@ -380,7 +379,6 @@
                 });
             };
 
-            // --- 畫面渲染 ---
             return (
                 <div className="relative overflow-hidden min-h-screen">
                     {/* Toast 提示框 */}
@@ -394,13 +392,20 @@
 
                     {/* 密碼防護牆 */}
                     {!isAuthenticated ? (
-                        <LoginScreen />
+                        <LoginScreen 
+                            passcode={passcode} 
+                            onLogin={() => {
+                                setIsAuthenticated(true);
+                                showToast("解鎖成功！歡迎體驗幸運拉霸機！", "success");
+                            }}
+                            showToast={showToast} 
+                        />
                     ) : (
-                        /* 主遊戲畫面 (乾淨清爽) */
+                        /* 主遊戲畫面 */
                         <div className="flex flex-col items-center py-8 px-4 relative">
                             <audio ref={audioRef} src={AUDIO_SRC} />
                             
-                            {/* 隱藏式設定按鈕 (右上角) */}
+                            {/* 右上角設定按鈕 */}
                             <button 
                                 onClick={() => setIsSettingsOpen(true)}
                                 className="absolute top-4 right-4 bg-white/50 hover:bg-white p-3 rounded-full text-gray-600 shadow-sm transition-all"
@@ -409,8 +414,19 @@
                                 <IconSettings />
                             </button>
 
-                            {/* 設定 Modal */}
-                            {isSettingsOpen && <SettingsModal />}
+                            {/* 設定控制台 */}
+                            {isSettingsOpen && (
+                                <SettingsModal 
+                                    onClose={() => setIsSettingsOpen(false)}
+                                    customImages={customImages}
+                                    setCustomImages={setCustomImages}
+                                    quotes={quotes}
+                                    setQuotes={setQuotes}
+                                    passcode={passcode}
+                                    setPasscode={setPasscode}
+                                    showToast={showToast}
+                                />
+                            )}
 
                             <header className="mb-8 text-center mt-4">
                                 <div className="flex items-center justify-center gap-2 mb-2">
@@ -423,7 +439,7 @@
                                 <p className="text-xl text-gray-600 font-medium">準備好迎接您的專屬金句了嗎？</p>
                             </header>
 
-                            {/* 參加者輸入區 */}
+                            {/* 姓名輸入 */}
                             <div className="w-full max-w-md mb-6">
                                 <input
                                     type="text"
@@ -434,7 +450,7 @@
                                 />
                             </div>
 
-                            {/* 票根顯示區 (Ticket) */}
+                            {/* 票根實體 */}
                             <div 
                                 ref={ticketRef} 
                                 className="w-full max-w-lg bg-white rounded-[2rem] shadow-2xl overflow-hidden border-4 border-yellow-400 relative"
@@ -451,7 +467,7 @@
                                         </h3>
                                     </div>
 
-                                    {/* 拉霸機螢幕 */}
+                                    {/* 滾動視窗 */}
                                     <div className="flex gap-3 md:gap-5 mb-8 p-5 bg-gray-800 rounded-2xl border-[6px] border-gray-700 shadow-[inset_0_10px_20px_rgba(0,0,0,0.5)] w-full justify-center items-center">
                                         {reels.map((itemIndex, i) => {
                                             const hasImages = customImages.length > 0;
@@ -466,10 +482,9 @@
                                                             className={`w-full h-full object-contain p-2 ${isSpinning ? 'spinning-effect' : ''}`}
                                                         />
                                                     ) : (
-                                                        /* 解決Jekyll衝突：將 {{ backgroundColor: ... }} 改為 Object.assign */
                                                         <div 
                                                             className={`w-full h-full flex items-center justify-center text-white font-bold text-5xl ${isSpinning ? 'spinning-effect' : ''}`}
-                                                            style={Object.assign({ backgroundColor: DEFAULT_COLORS[itemIndex % DEFAULT_COLORS.length] })}
+                                                            style={getBgColorStyle(itemIndex)}
                                                         > ? </div>
                                                     )}
                                                 </div>
@@ -477,7 +492,7 @@
                                         })}
                                     </div>
 
-                                    {/* 結果金句區 */}
+                                    {/* 金句抽取 */}
                                     <div className="w-full text-center min-h-[130px] flex flex-col justify-center items-center p-6 bg-yellow-50/80 rounded-2xl border border-yellow-200 dashed-border relative">
                                         {showJackpot && (
                                             <div className="absolute -top-5 bg-red-500 text-white px-6 py-1 rounded-full text-sm font-black animate-bounce-short shadow-lg z-10 uppercase tracking-widest border-2 border-white">
@@ -496,7 +511,7 @@
                                 </div>
                             </div>
 
-                            {/* 操作按鈕 */}
+                            {/* 控制鈕 */}
                             <div className="mt-8 w-full max-w-md flex flex-col gap-4">
                                 <button
                                     onClick={handleSpin}
