@@ -1,1 +1,0 @@
-# geg_ruth.luckydraw
